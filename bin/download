@@ -7,10 +7,9 @@
 set -euo pipefail
 
 sys_target=$(uname)
-arch=$(uname -m)
 case "$sys_target" in
     Linux) ;;
-    *) echo "OS Not Supported: $uname_s" ;;
+    *) echo "OS Not Supported: $sys_target" ;;
 esac
 
 current_script_path=${BASH_SOURCE[0]}
@@ -23,13 +22,24 @@ mkdir -p "$ASDF_DOWNLOAD_PATH"
 
 # Download file to the download directory
 echo "* Downloading $TOOL_NAME release $ASDF_INSTALL_VERSION..."
-gh release download "$ASDF_INSTALL_VERSION" --clobber --repo "$GH_REPO" --dir "${ASDF_DOWNLOAD_PATH}" || fail "Could not download ceptre"
+( gh release \
+    download "$ASDF_INSTALL_VERSION" \
+    --clobber \
+    --repo "$GH_REPO" \
+    --dir "${ASDF_DOWNLOAD_PATH}"
+  ) || fail "Could not download ceptre"
 
 tar_name="${TOOL_NAME}-${sys_target}"
 bin_name="${TOOL_NAME}-bin"
+
+echo "* Unzipping Release"
 unzip -o "${ASDF_DOWNLOAD_PATH}/${sys_target}"*.zip -d "$ASDF_DOWNLOAD_PATH"
-echo "Unpacking Binary"
+
+echo "* Unpacking Binary"
 tar -xzf "$ASDF_DOWNLOAD_PATH/${sys_target}/${tar_name,,}.tgz" -C "$ASDF_DOWNLOAD_PATH" || fail "Could not extract ceptre"
+
+echo "* Renaming Binary"
 mv "$ASDF_DOWNLOAD_PATH/${bin_name}" "$ASDF_DOWNLOAD_PATH/ceptre"
 
+echo "* Cleaning Up"
 rm "${ASDF_DOWNLOAD_PATH}"/*.zip
